@@ -1,4 +1,5 @@
-import type { LoanApplication } from "../types";
+import type { LoanApplication, SlotFile } from "../types";
+import DocumentSlots from "./DocumentSlots";
 
 const DOCS = ["id_proof", "income_proof", "bank_statement"];
 
@@ -7,9 +8,18 @@ interface Props {
   setApp: (app: LoanApplication) => void;
   onSubmit: () => void;
   loading: boolean;
+  title?: string;
+  submitLabel?: string;
+  // When provided, the form shows one upload slot per document type instead of
+  // the tick boxes (the tick boxes remain only for the stateless Sandbox).
+  docs?: SlotFile[];
+  setDocs?: (docs: SlotFile[]) => void;
 }
 
-export default function ApplicationForm({ app, setApp, onSubmit, loading }: Props) {
+export default function ApplicationForm({
+  app, setApp, onSubmit, loading,
+  title = "Loan application", submitLabel = "Screen application", docs, setDocs,
+}: Props) {
   const num = (v: string): number | null => (v === "" ? null : Number(v));
   const set = (patch: Partial<LoanApplication>) => setApp({ ...app, ...patch });
 
@@ -30,7 +40,7 @@ export default function ApplicationForm({ app, setApp, onSubmit, loading }: Prop
         onSubmit();
       }}
     >
-      <h2>Loan application</h2>
+      <h2>{title}</h2>
 
       <div className="grid">
         <label>
@@ -89,8 +99,11 @@ export default function ApplicationForm({ app, setApp, onSubmit, loading }: Prop
         </label>
       </div>
 
+      {docs && setDocs ? (
+        <DocumentSlots docs={docs} setDocs={setDocs} />
+      ) : (
       <fieldset className="docs">
-        <legend>Documents provided</legend>
+        <legend>Documents on file (simulated — Sandbox only)</legend>
         {DOCS.map((doc) => (
           <label key={doc} className="checkbox">
             <input
@@ -102,6 +115,7 @@ export default function ApplicationForm({ app, setApp, onSubmit, loading }: Prop
           </label>
         ))}
       </fieldset>
+      )}
 
       <label>
         Applicant notes (free text — facts here are extracted by the LLM)
@@ -114,7 +128,7 @@ export default function ApplicationForm({ app, setApp, onSubmit, loading }: Prop
       </label>
 
       <button type="submit" disabled={loading}>
-        {loading ? "Screening…" : "Screen application"}
+        {loading ? "Working…" : submitLabel}
       </button>
     </form>
   );
