@@ -219,3 +219,6 @@ button.choice.info.selected { background: var(--accent); color: #0b1220; border-
 .slot .file-list { margin: 0; }
 button.slot-btn { align-self: flex-start; padding: 6px 12px; font-size: 0.82rem; }
 .upload { margin: 14px 0; }
+
+header.row-between > div:first-child { flex: 1 1 420px; min-width: 0; }
+.user-box { flex-shrink: 0; }
