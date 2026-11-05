@@ -34,6 +34,8 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
     return <div className="card placeholder">{error ?? "Loading…"}</div>;
   }
 
+  // Approved / rejected is final: no new decision, no re-screening.
+  const closed = app.status === "approved" || app.status === "rejected";
   const override = choice ? isOverride(choice, app.recommendation) : false;
   const canSubmit =
     !!choice && (!override || note.trim().length > 0) && (choice !== "info_requested" || message.trim().length > 0);
@@ -73,9 +75,11 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
     <div>
       <div className="toolbar">
         <button className="ghost" onClick={onBack}>← Back to queue</button>
-        <button className="ghost" onClick={rescreen} disabled={busy !== null}>
-          {busy === "rescreen" ? "Re-running AI analysis…" : "Re-run AI analysis"}
-        </button>
+        {!closed && (
+          <button className="ghost" onClick={rescreen} disabled={busy !== null}>
+            {busy === "rescreen" ? "Re-running AI analysis…" : "Re-run AI analysis"}
+          </button>
+        )}
       </div>
 
       <div className="card">
@@ -108,6 +112,29 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
         </div>
 
         <div>
+          {closed ? (
+            <div className="card decision-card">
+              <h3>Final decision</h3>
+              <div>
+                <StatusBadge value={app.status} />
+              </div>
+              <p className="muted">
+                Decided by {app.decided_by ?? "—"} on {fmtDate(app.decided_at)}. System recommendation was{" "}
+                <RecommendationBadge value={app.recommendation} small />. This application is closed and can't be
+                changed.
+              </p>
+              {app.decision_note && (
+                <p>
+                  <strong>Internal note:</strong> {app.decision_note}
+                </p>
+              )}
+              {app.applicant_message && (
+                <p>
+                  <strong>Message sent to applicant:</strong> {app.applicant_message}
+                </p>
+              )}
+            </div>
+          ) : (
           <div className="card decision-card">
             <h3>Your decision</h3>
             <p className="muted">
@@ -143,6 +170,7 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
               {busy === "decide" ? "Saving…" : "Confirm decision"}
             </button>
           </div>
+          )}
 
           <div className="card">
             <h3>Submitted application</h3>
