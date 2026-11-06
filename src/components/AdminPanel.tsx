@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminList, adminStats } from "../api";
 import type { AdminApplicationSummary, AppStatus, Stats } from "../types";
+import { usePoll } from "../usePoll";
 import AdminReview from "./AdminReview";
 import { RecommendationBadge, RiskBadge, StatusBadge, statusLabel } from "./Badges";
 import Sandbox from "./Sandbox";
@@ -22,6 +23,7 @@ export default function AdminPanel() {
   }, [filter]);
 
   useEffect(load, [load]);
+  usePoll(selected === null && !!rows?.some((r) => r.screening_in_progress), load);
 
   if (tab === "queue" && selected !== null) {
     return <AdminReview id={selected} onBack={() => { setSelected(null); load(); }} onChanged={load} />;
@@ -96,7 +98,7 @@ export default function AdminPanel() {
                           {inr(r.requested_amount)}
                           <div className="muted small">{r.loan_purpose || ""}</div>
                         </td>
-                        <td><RecommendationBadge value={r.recommendation} small /></td>
+                        <td><RecommendationBadge value={r.recommendation} pending={r.screening_in_progress} small /></td>
                         <td><RiskBadge value={r.risk_level} small /></td>
                         <td>{r.document_count}</td>
                         <td><StatusBadge value={r.status} small /></td>

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adminDecide, adminGet, adminRescreen, openDocument } from "../api";
 import type { AdminApplication, FinalDecision } from "../types";
 import { RecommendationBadge, StatusBadge } from "./Badges";
+import { usePoll } from "../usePoll";
 import DecisionResult from "./DecisionResult";
 import { DOC_TYPE_LABEL, SLOTS } from "./DocumentSlots";
 
@@ -26,9 +27,18 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
   const [busy, setBusy] = useState<"decide" | "rescreen" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     adminGet(id).then(setApp).catch((e) => setError(String(e instanceof Error ? e.message : e)));
   }, [id]);
+  useEffect(reload, [reload]);
+
+  // AI screening runs in the background: refresh until it's done.
+  const screening = !!app?.screening_in_progress;
+  useEffect(() => {
+    if (app && !screening) onChanged();   // refresh the queue once a screening finishes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screening]);
+  usePoll(screening, reload);
 
   if (!app) {
     return <div className="card placeholder">{error ?? "Loading…"}</div>;
@@ -76,8 +86,8 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
       <div className="toolbar">
         <button className="ghost" onClick={onBack}>← Back to queue</button>
         {!closed && (
-          <button className="ghost" onClick={rescreen} disabled={busy !== null}>
-            {busy === "rescreen" ? "Re-running AI analysis…" : "Re-run AI analysis"}
+          <button className="ghost" onClick={rescreen} disabled={busy !== null || screening}>
+            {busy === "rescreen" || screening ? "AI analysis running…" : "Re-run AI analysis"}
           </button>
         )}
       </div>
@@ -104,9 +114,16 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
 
       <div className="columns">
         <div>
+          {screening && (
+            <div className="card placeholder">
+              <span className="spinner" aria-hidden /> AI analysis is running. This usually takes 1–3 minutes, and
+              the page updates by itself.
+              {app.screening ? " The result below is from the previous run." : ""}
+            </div>
+          )}
           {app.screening ? (
             <DecisionResult decision={app.screening} />
-          ) : (
+          ) : screening ? null : (
             <div className="card placeholder">Not screened yet — use “Re-run AI analysis”.</div>
           )}
         </div>
@@ -138,7 +155,8 @@ export default function AdminReview({ id, onBack, onChanged }: { id: number; onB
           <div className="card decision-card">
             <h3>Your decision</h3>
             <p className="muted">
-              System recommendation: <RecommendationBadge value={app.recommendation} small />. The final call is yours.
+              System recommendation:{" "}
+              <RecommendationBadge value={app.recommendation} pending={screening} small />. The final call is yours.
             </p>
             <div className="choice-row">
               {CHOICES.map((c) => (

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { addDocuments, myApplications, openDocument, submitApplication } from "../api";
 import type { ApplicantApplication, LoanApplication, SlotFile, User } from "../types";
+import { usePoll } from "../usePoll";
 import ApplicationForm from "./ApplicationForm";
 import { StatusBadge } from "./Badges";
 import DocumentSlots, { DOC_TYPE_LABEL, MAX_FILES } from "./DocumentSlots";
@@ -66,6 +67,12 @@ function ApplicationCard({ app, onUpdated }: { app: ApplicantApplication; onUpda
         <StatusBadge value={app.status} />
       </div>
       <p className="muted">{STATUS_HELP[app.status]}</p>
+      {app.screening_in_progress && (
+        <div className="message info">
+          <span className="spinner" aria-hidden /> Received. We're checking your documents now; this page updates
+          by itself, so you don't need to wait here.
+        </div>
+      )}
 
       {app.applicant_message && (
         <div className={`message ${app.status}`}>
@@ -99,7 +106,7 @@ function ApplicationCard({ app, onUpdated }: { app: ApplicantApplication; onUpda
           </label>
           {error && <div className="error-text">{error}</div>}
           <button type="button" disabled={busy || (!files.length && !note.trim())} onClick={send}>
-            {busy ? "Uploading & analysing…" : "Send update"}
+            {busy ? "Uploading…" : "Send update"}
           </button>
         </details>
       )}
@@ -125,6 +132,8 @@ export default function ApplicantPanel({ user }: { user: User }) {
   }, []);
 
   useEffect(load, [load]);
+  // Screening runs in the background after upload: refresh until it's done.
+  usePoll(!!apps?.some((a) => a.screening_in_progress), load);
 
   const submit = async () => {
     setBusy(true);
@@ -167,7 +176,7 @@ export default function ApplicantPanel({ user }: { user: User }) {
             docs={files}
             setDocs={setFiles}
           />
-          {busy && <p className="muted">Uploading and analysing your documents — this can take a little while.</p>}
+          {busy && <p className="muted">Uploading your documents…</p>}
         </div>
       ) : apps === null ? (
         <div className="card placeholder">Loading…</div>

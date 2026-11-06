@@ -113,6 +113,8 @@ export interface ApplicantApplication {
   final_decision?: "approved" | "rejected" | null;
   applicant_message?: string | null;
   decided_at?: string | null;
+  /** True while the AI screening runs in the background (can take minutes). */
+  screening_in_progress?: boolean;
 }
 
 export interface AppEvent {
@@ -144,6 +146,7 @@ export interface AdminApplicationSummary {
   risk_level?: RiskInsights["risk_level"] | null;
   document_count: number;
   created_at: string;
+  screening_in_progress?: boolean;
 }
 
 export interface Stats {

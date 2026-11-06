@@ -222,3 +222,18 @@ button.slot-btn { align-self: flex-start; padding: 6px 12px; font-size: 0.82rem;
 
 header.row-between > div:first-child { flex: 1 1 420px; min-width: 0; }
 .user-box { flex-shrink: 0; }
+
+/* Background AI screening indicator */
+.spinner {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 6px;
+  vertical-align: -0.1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

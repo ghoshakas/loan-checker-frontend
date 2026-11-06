@@ -7,7 +7,16 @@ const REC: Record<DecisionType, [string, string]> = {
   INCOMPLETE: ["incomplete", "Incomplete"],
 };
 
-export function RecommendationBadge({ value, small }: { value?: DecisionType | null; small?: boolean }) {
+export function RecommendationBadge({
+  value,
+  small,
+  pending,
+}: {
+  value?: DecisionType | null;
+  small?: boolean;
+  pending?: boolean;
+}) {
+  if (pending) return <span className={`badge info${small ? " sm" : ""}`}>Screening…</span>;
   if (!value) return <span className={`badge incomplete${small ? " sm" : ""}`}>Not screened</span>;
   const [cls, label] = REC[value];
   return <span className={`badge ${cls}${small ? " sm" : ""}`}>{label}</span>;
